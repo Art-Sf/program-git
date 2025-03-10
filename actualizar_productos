@@ -1,0 +1,43 @@
+package com.database.db2.dao;
+
+import com.database.db2.DB2Connection;
+import java.sql.*;
+
+public class ProductoDAO {
+    public void insertarProducto(int codigo, int cantidadInventario, float precioUnitario) {
+        String sql = "INSERT INTO producto (codigo, cantidadinventario, preciounitario) VALUES (?, ?, ?)";
+        try (Connection conn = DB2Connection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, codigo);
+            stmt.setInt(2, cantidadInventario);
+            stmt.setFloat(3, precioUnitario);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void actualizarProducto(int codigo, int cantidadInventario, float precioUnitario) {
+        String sql = "UPDATE producto SET cantidadinventario = ?, preciounitario = ? WHERE codigo = ?";
+        try (Connection conn = DB2Connection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, cantidadInventario);
+            stmt.setFloat(2, precioUnitario);
+            stmt.setInt(3, codigo);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void eliminarProducto(int codigo) {
+        String sql = "DELETE FROM producto WHERE codigo = ?";
+        try (Connection conn = DB2Connection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, codigo);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
