@@ -1,0 +1,37 @@
+package com.database.db2;
+
+import java.sql.*;
+
+public class DB2Connection {
+    private static final String URL = "jdbc:db2://localhost:50000/TU_BASE_DATOS";
+    private static final String USER = "tu_usuario";
+    private static final String PASSWORD = "tu_contraseña";
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+
+    public static void crearTablas() {
+        String[] sqlStatements = {
+            "CREATE TABLE usuario (clave INT PRIMARY KEY, nombre VARCHAR(100), rol VARCHAR(50))",
+            "CREATE TABLE OrdenCompra (consecutivo INT PRIMARY KEY, proveedor VARCHAR(50), producto VARCHAR(50), preciounitario FLOAT, preciototal FLOAT, credito FLOAT)",
+            "CREATE TABLE proveedor (Nit INT PRIMARY KEY, nombreempresa VARCHAR(50), telefono VARCHAR(20), direccion VARCHAR(50), producto VARCHAR(50), credito FLOAT)",
+            "CREATE TABLE producto (codigo INT PRIMARY KEY, cantidadinventario INT, preciounitario FLOAT)",
+            "CREATE TABLE informe (numeroorden INT PRIMARY KEY, fechacompra DATE, proveedor VARCHAR(50), producto VARCHAR(50), cantidadcomprada INT, preciounitario FLOAT, preciototal FLOAT)"
+        };
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            for (String sql : sqlStatements) {
+                stmt.executeUpdate(sql);
+            }
+            System.out.println("Tablas creadas exitosamente.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        crearTablas();
+    }
+}
