@@ -1,0 +1,134 @@
+mport React, { useState } from "react";
+
+// Componente de Inicio de Sesión
+function Login({ onLogin }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (username && password) {
+      onLogin(); // Simula la autenticación
+    } else {
+      alert("Por favor, ingrese usuario y contraseña");
+    }
+  };
+
+  return (
+    <div>
+      <h2>Inicio de Sesión</h2>
+      <form onSubmit={handleLogin}>
+        <label>Usuario:</label>
+        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
+        <label>Clave:</label>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <button type="submit">Ingresar</button>
+      </form>
+    </div>
+  );
+}
+
+// Componente de Ingreso de Proveedores
+function SupplierForm() {
+  const [supplier, setSupplier] = useState({ razonSocial: "", nit: "", telefono: "", contacto: "", direccion: "", productos: "" });
+
+  const handleChange = (e) => {
+    setSupplier({ ...supplier, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert("Proveedor ingresado correctamente.");
+  };
+
+  return (
+    <div>
+      <h2>Ingreso de Proveedor</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="text" name="razonSocial" placeholder="Razón Social" onChange={handleChange} required />
+        <input type="text" name="nit" placeholder="NIT" onChange={handleChange} required />
+        <input type="text" name="telefono" placeholder="Teléfono" onChange={handleChange} required />
+        <input type="text" name="contacto" placeholder="Contacto" onChange={handleChange} required />
+        <input type="text" name="direccion" placeholder="Dirección" onChange={handleChange} required />
+        <input type="text" name="productos" placeholder="Productos que suministra" onChange={handleChange} required />
+        <button type="submit">Guardar</button>
+      </form>
+    </div>
+  );
+}
+
+// Componente de Orden de Compra
+function PurchaseOrder() {
+  const [order, setOrder] = useState({ proveedor: "", producto: "", cantidad: "", fechaEmision: "", precio: "", valorTotal: "", observaciones: "" });
+
+  const handleChange = (e) => {
+    setOrder({ ...order, [e.target.name]: e.target.value });
+  };
+
+  const calculateTotal = () => {
+    const total = parseFloat(order.cantidad || 0) * parseFloat(order.precio || 0);
+    setOrder({ ...order, valorTotal: total.toFixed(2) });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert("Orden de compra generada correctamente.");
+  };
+
+  return (
+    <div>
+      <h2>Orden de Compra</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="text" name="proveedor" placeholder="Proveedor" onChange={handleChange} required />
+        <input type="text" name="producto" placeholder="Producto" onChange={handleChange} required />
+        <input type="number" name="cantidad" placeholder="Cantidad" onChange={handleChange} onBlur={calculateTotal} required />
+        <input type="date" name="fechaEmision" onChange={handleChange} required />
+        <input type="number" name="precio" placeholder="Precio" onChange={handleChange} onBlur={calculateTotal} required />
+        <input type="text" name="valorTotal" value={order.valorTotal} readOnly />
+        <textarea name="observaciones" placeholder="Observaciones" onChange={handleChange} />
+        <button type="submit">Generar Orden</button>
+      </form>
+    </div>
+  );
+}
+
+// Componente Principal del Dashboard
+function Dashboard() {
+  const [activeTab, setActiveTab] = useState("proveedores");
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case "proveedores":
+        return <SupplierForm />;
+      case "ordenCompra":
+        return <PurchaseOrder />;
+      default:
+        return <SupplierForm />;
+    }
+  };
+
+  return (
+    <div>
+      <h1>Bienvenido al Sistema de Compras</h1>
+      <nav>
+        <button onClick={() => setActiveTab("proveedores")}>Ingreso de Proveedores</button>
+        <button onClick={() => setActiveTab("ordenCompra")}>Orden de Compra</button>
+      </nav>
+      <hr />
+      {renderTab()}
+    </div>
+  );
+}
+
+// Componente Principal
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  return (
+    <div>
+      {!isAuthenticated ? <Login onLogin={() => setIsAuthenticated(true)} /> : <Dashboard />}
+    </div>
+  );
+}
+
+export default App;
