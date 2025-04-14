@@ -1,0 +1,198 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf610
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 package com.example.login;\
+\
+import org.junit.jupiter.api.Test;\
+import org.junit.jupiter.api.extension.ExtendWith;\
+import org.mockito.*;\
+import org.springframework.boot.autoconfigure.SpringBootApplication;\
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;\
+import org.springframework.boot.test.context.SpringBootTest;\
+import org.springframework.boot.test.mock.mockito.MockBean;\
+import org.springframework.data.jpa.repository.JpaRepository;\
+import org.springframework.http.*;\
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;\
+import org.springframework.security.crypto.password.PasswordEncoder;\
+import org.springframework.stereotype.*;\
+import org.springframework.web.bind.annotation.*;\
+import org.springframework.boot.test.mock.mockito.*;\
+import org.springframework.test.web.servlet.*;\
+import org.springframework.beans.factory.annotation.Autowired;\
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;\
+import org.springframework.test.context.junit.jupiter.SpringExtension;\
+\
+import javax.persistence.*;\
+import java.util.*;\
+\
+import static org.junit.jupiter.api.Assertions.*;\
+import static org.mockito.Mockito.*;\
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;\
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;\
+\
+// Simulaci\'f3n de la app Spring Boot\
+@SpringBootApplication\
+public class LoginAppTest \{\
+\
+    // -------- ENTIDAD --------\
+    @Entity\
+    static class Usuario \{\
+        @Id\
+        @GeneratedValue(strategy = GenerationType.IDENTITY)\
+        private Long id;\
+        private String email;\
+        private String password;\
+\
+        // Getters y setters\
+        public String getEmail() \{ return email; \}\
+        public void setEmail(String email) \{ this.email = email; \}\
+        public String getPassword() \{ return password; \}\
+        public void setPassword(String password) \{ this.password = password; \}\
+    \}\
+\
+    // -------- REPOSITORIO --------\
+    interface UsuarioRepository extends JpaRepository<Usuario, Long> \{\
+        Optional<Usuario> findByEmail(String email);\
+    \}\
+\
+    // -------- SERVICIO --------\
+    @Service\
+    static class AuthService \{\
+        @Autowired\
+        private UsuarioRepository usuarioRepository;\
+\
+        @Autowired\
+        private PasswordEncoder passwordEncoder;\
+\
+        public String login(String email, String password) \{\
+            Usuario usuario = usuarioRepository.findByEmail(email)\
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));\
+            if (!passwordEncoder.matches(password, usuario.getPassword())) \{\
+                throw new RuntimeException("Credenciales inv\'e1lidas");\
+            \}\
+            return JwtUtil.generateToken(email);\
+        \}\
+    \}\
+\
+    // -------- CONTROLADOR --------\
+    @RestController\
+    @RequestMapping("/auth")\
+    static class AuthController \{\
+        @Autowired\
+        private AuthService authService;\
+\
+        @PostMapping("/login")\
+        public ResponseEntity<?> login(@RequestBody LoginRequest request) \{\
+            try \{\
+                String token = authService.login(request.getEmail(), request.getPassword());\
+                return ResponseEntity.ok(new JwtResponse(token));\
+            \} catch (Exception e) \{\
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());\
+            \}\
+        \}\
+    \}\
+\
+    // -------- DTOs --------\
+    static class LoginRequest \{\
+        private String email;\
+        private String password;\
+\
+        public String getEmail() \{ return email; \}\
+        public void setEmail(String email) \{ this.email = email; \}\
+        public String getPassword() \{ return password; \}\
+        public void setPassword(String password) \{ this.password = password; \}\
+    \}\
+\
+    static class JwtResponse \{\
+        private String token;\
+\
+        public JwtResponse(String token) \{ this.token = token; \}\
+        public String getToken() \{ return token; \}\
+    \}\
+\
+    // -------- JWT UTIL --------\
+    static class JwtUtil \{\
+        private static final String FAKE_SECRET = "clave";\
+        public static String generateToken(String email) \{\
+            return "token.jwt.simulado.para." + email; // Simulaci\'f3n para pruebas\
+        \}\
+    \}\
+\
+    // -------- PASSWORD ENCODER BEAN --------\
+    @Component\
+    static class PasswordEncoderProvider \{\
+        @Bean\
+        public PasswordEncoder passwordEncoder() \{\
+            return new BCryptPasswordEncoder();\
+        \}\
+    \}\
+\
+    // -------- PRUEBAS DE SERVICIO --------\
+    @ExtendWith(MockitoExtension.class)\
+    static class AuthServiceTest \{\
+        @Mock\
+        UsuarioRepository usuarioRepository;\
+\
+        @Mock\
+        PasswordEncoder passwordEncoder;\
+\
+        @InjectMocks\
+        AuthService authService;\
+\
+        @Test\
+        void loginValidoDevuelveToken() \{\
+            Usuario usuario = new Usuario();\
+            usuario.setEmail("test@correo.com");\
+            usuario.setPassword("hash123");\
+\
+            when(usuarioRepository.findByEmail("test@correo.com")).thenReturn(Optional.of(usuario));\
+            when(passwordEncoder.matches("1234", "hash123")).thenReturn(true);\
+\
+            String token = authService.login("test@correo.com", "1234");\
+\
+            assertNotNull(token);\
+            assertTrue(token.contains("test@correo.com"));\
+        \}\
+    \}\
+\
+    // -------- PRUEBAS DE CONTROLADOR --------\
+    @WebMvcTest(AuthController.class)\
+    static class AuthControllerTest \{\
+\
+        @Autowired\
+        private MockMvc mockMvc;\
+\
+        @MockBean\
+        private AuthService authService;\
+\
+        @Test\
+        void loginExitosoDevuelveToken() throws Exception \{\
+            when(authService.login("user@correo.com", "1234")).thenReturn("jwt.token.simulado");\
+\
+            mockMvc.perform(post("/auth/login")\
+                    .contentType(MediaType.APPLICATION_JSON)\
+                    .content("\{\\"email\\":\\"user@correo.com\\", \\"password\\":\\"1234\\"\}"))\
+                    .andExpect(status().isOk())\
+                    .andExpect(jsonPath("$.token").value("jwt.token.simulado"));\
+        \}\
+\
+        @Test\
+        void loginInvalidoDevuelve401() throws Exception \{\
+            when(authService.login("user@correo.com", "1234"))\
+                    .thenThrow(new RuntimeException("Credenciales inv\'e1lidas"));\
+\
+            mockMvc.perform(post("/auth/login")\
+                    .contentType(MediaType.APPLICATION_JSON)\
+                    .content("\{\\"email\\":\\"user@correo.com\\", \\"password\\":\\"1234\\"\}"))\
+                    .andExpect(status().isUnauthorized())\
+                    .andExpect(content().string("Credenciales inv\'e1lidas"));\
+        \}\
+    \}\
+\}\
+\
+\
+}
